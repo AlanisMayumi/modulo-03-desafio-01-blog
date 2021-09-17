@@ -1,1 +1,28 @@
-// TODO
+.article {
+  max-width: 720px;
+}
+.title {
+  font-weight: 700;
+  font-size: 48px;
+  line-height: 58px;
+  letter-spacing: -0.5px;
+  color: var(--heading);
+}
+
+.paragraphTitle {
+  color: var(--heading);
+  padding-bottom: 2rem;
+  font-weight: 700;
+  font-size: 2rem;
+}
+.paragraph {
+  text-align: justify;
+  line-height: 25px;
+  padding-bottom: 1rem;
+}
+
+.content {
+  line-height: 2rem;
+  padding-top: 4rem;
+  max-width: 720px;
+}

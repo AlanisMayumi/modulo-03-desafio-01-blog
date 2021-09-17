@@ -1,1 +1,19 @@
-// TODO
+.main {
+  padding: 1.4rem 14rem;
+  margin-top: 2rem;
+}
+
+.info {
+  display: flex;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.userInfo {
+  display: flex;
+  margin-left: 2rem;
+  align-items: center;
+}
+.icon {
+  margin-right: 0.5rem;
+}
