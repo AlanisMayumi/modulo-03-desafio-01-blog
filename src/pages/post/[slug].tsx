@@ -35,6 +35,7 @@ interface PostProps {
 
 export default function Post({ post }: PostProps): JSX.Element {
   const router = useRouter();
+
   const text = post.data.content.reduce((textAmount, paragraph) => {
     const { heading } = paragraph;
     const body = PrismicDOM.RichText.asText(paragraph.body);
@@ -69,7 +70,7 @@ export default function Post({ post }: PostProps): JSX.Element {
             </div>
             <div className={commonStyles.userInfo}>
               <FiClock className={commonStyles.icon} />
-              <span>{readingTime.toFixed()} min</span>
+              <span>{Math.ceil(readingTime)} min</span>
             </div>
           </div>
 
@@ -121,16 +122,19 @@ export const getStaticProps: GetStaticProps<PostProps> = async ({ params }) => {
   const response = await prismic.getByUID('post', String(slug), {});
 
   const post = {
-    slug,
     first_publication_date: response.first_publication_date,
+    uid: response.uid,
     data: {
       title: response.data.title,
       subtitle: response.data.subtitle,
-      author: response.data.author,
       banner: {
         url: response.data.banner.url,
       },
-      content: response.data.content,
+      author: response.data.author,
+      content: response.data.content.map(content => ({
+        heading: content.heading,
+        body: content.body,
+      })),
     },
   };
 
@@ -138,6 +142,6 @@ export const getStaticProps: GetStaticProps<PostProps> = async ({ params }) => {
     props: {
       post,
     },
-    redirect: 60 * 30, // 30 minutes
+    revalidate: 60 * 30, // 30 minutes
   };
 };
