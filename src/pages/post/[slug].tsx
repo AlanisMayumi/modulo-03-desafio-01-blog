@@ -7,13 +7,17 @@ import Prismic from '@prismicio/client';
 import { FiCalendar, FiClock } from 'react-icons/fi';
 import { AiOutlineUser } from 'react-icons/ai';
 import PrismicDOM from 'prismic-dom';
+import Link from 'next/link';
 import { getPrismicClient } from '../../services/prismic';
 import commonStyles from '../../styles/common.module.scss';
 import styles from './post.module.scss';
 import Header from '../../components/Header';
+import Comments from '../../components/Comments';
+import Preview from '../../components/Preview';
 
 interface Post {
   first_publication_date: string | null;
+  last_publication_date: string | null;
   data: {
     title: string;
     banner: {
@@ -31,11 +35,28 @@ interface Post {
 
 interface PostProps {
   post: Post;
+  preview: boolean;
+  nextPost?: {
+    uid?: string;
+    data?: {
+      title?: string;
+    };
+  };
+  prevPost?: {
+    uid?: string;
+    data?: {
+      title?: string;
+    };
+  };
 }
 
-export default function Post({ post }: PostProps): JSX.Element {
+export default function Post({
+  post,
+  preview,
+  nextPost,
+  prevPost,
+}: PostProps): JSX.Element {
   const router = useRouter();
-
   const text = post.data.content.reduce((textAmount, paragraph) => {
     const { heading } = paragraph;
     const body = PrismicDOM.RichText.asText(paragraph.body);
@@ -73,6 +94,16 @@ export default function Post({ post }: PostProps): JSX.Element {
               <span>{Math.ceil(readingTime)} min</span>
             </div>
           </div>
+          {post.last_publication_date &&
+            `* editado em ${format(
+              new Date(post.last_publication_date),
+              'dd MMM yyyy',
+              {
+                locale: ptBR,
+              }
+            )}, às ${format(new Date(post.last_publication_date), 'hh:mm', {
+              locale: ptBR,
+            })}`}
 
           <div className={styles.content} />
           {post.data.content.map(content => (
@@ -86,7 +117,36 @@ export default function Post({ post }: PostProps): JSX.Element {
               <br />
             </div>
           ))}
+
+          <div className={styles.footerButtons}>
+            <div>
+              {prevPost && (
+                <Link href={`/post/${prevPost.uid}`}>
+                  <a>
+                    <p className={styles.footerButtonTitle}>
+                      {prevPost.data.title}
+                    </p>
+                    <p className={styles.footerButtonText}>Post anterior</p>
+                  </a>
+                </Link>
+              )}
+            </div>
+            <div>
+              {nextPost && (
+                <Link href={`/post/${nextPost.uid}`}>
+                  <a>
+                    <p className={styles.footerButtonTitle}>
+                      {nextPost.data.title}
+                    </p>
+                    <p className={styles.footerButtonText}>Próximo post</p>
+                  </a>
+                </Link>
+              )}
+            </div>
+          </div>
+          <Comments />
         </article>
+        {preview && <Preview />}
       </main>
     </>
   );
@@ -116,13 +176,21 @@ export const getStaticPaths: GetStaticPaths = async () => {
   };
 };
 
-export const getStaticProps: GetStaticProps<PostProps> = async ({ params }) => {
+export const getStaticProps: GetStaticProps<PostProps> = async ({
+  preview = false,
+  previewData = {},
+  params,
+}) => {
   const { slug } = params;
   const prismic = getPrismicClient();
-  const response = await prismic.getByUID('post', String(slug), {});
+  const response = await prismic.getByUID('post', String(slug), {
+    ref: previewData?.ref ?? null,
+    pageSize: 100,
+  });
 
   const post = {
     first_publication_date: response.first_publication_date,
+    last_publication_date: response.last_publication_date,
     uid: response.uid,
     data: {
       title: response.data.title,
@@ -138,10 +206,28 @@ export const getStaticProps: GetStaticProps<PostProps> = async ({ params }) => {
     },
   };
 
+  const posts = await prismic.query(
+    [Prismic.predicates.at('document.type', 'post')],
+    {
+      fetch: ['post.title', 'post.subtitle', 'post.author'],
+    }
+  );
+  const mainPostindex = posts.results.findIndex(p => p.uid === post.uid);
+  const nextPost = posts.results[mainPostindex + 1]
+    ? posts.results[mainPostindex + 1]
+    : null;
+  const prevPost = posts.results[mainPostindex - 1]
+    ? posts.results[mainPostindex - 1]
+    : null;
+
   return {
     props: {
       post,
+      preview,
+      nextPost,
+      prevPost,
     },
+
     revalidate: 60 * 30, // 30 minutes
   };
 };

@@ -26,3 +26,22 @@
   padding-top: 4rem;
   max-width: 720px;
 }
+
+.footerButtons {
+  border-top: 1px solid var(--body);
+  display: flex;
+  justify-content: space-between;
+  margin-top: 3rem;
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+
+  .footerButtonTitle {
+    font-size: 18px;
+    color: var(--heading);
+    padding-bottom: 0.5rem;
+  }
+  .footerButtonText {
+    font-size: 16px;
+    color: var(--highlight);
+  }
+}

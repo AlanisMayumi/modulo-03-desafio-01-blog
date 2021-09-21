@@ -11,6 +11,7 @@ import { getPrismicClient } from '../services/prismic';
 import commonStyles from '../styles/common.module.scss';
 import styles from './home.module.scss';
 import Header from '../components/Header';
+import Preview from '../components/Preview';
 
 interface Post {
   uid?: string;
@@ -29,9 +30,13 @@ interface PostPagination {
 
 interface HomeProps {
   postsPagination: PostPagination;
+  preview: boolean;
 }
 
-export default function Home({ postsPagination }: HomeProps): JSX.Element {
+export default function Home({
+  postsPagination,
+  preview,
+}: HomeProps): JSX.Element {
   const { results, next_page }: PostPagination = postsPagination;
   const [nextPage, setNextPage] = useState<string>(next_page);
   const [posts, setPosts] = useState<Post[]>(results);
@@ -93,18 +98,24 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
             <strong className={styles.mais}>Carregar mais posts</strong>
           </button>
         )}
+
+        <div className={styles.preview}>{preview && <Preview />}</div>
       </main>
     </>
   );
 }
 
-export const getStaticProps: GetStaticProps = async () => {
+export const getStaticProps: GetStaticProps<HomeProps> = async ({
+  preview = false,
+  previewData,
+}) => {
   const prismic = getPrismicClient();
   const response = await prismic.query(
     [Prismic.predicates.at('document.type', 'post')],
     {
       fetch: ['post.title', 'post.subtitle', 'post.author'],
       pageSize: 1,
+      ref: previewData?.ref ?? null,
     }
   );
 
@@ -128,6 +139,7 @@ export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {
       postsPagination,
+      preview,
     },
   };
 };
